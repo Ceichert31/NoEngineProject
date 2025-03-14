@@ -1,9 +1,26 @@
 // NoEngineProject.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
 
-#include <iostream>
+// include the basic windows header files and the Direct3D header files
 #include <windows.h>
 #include <windowsx.h>
+#include <d3d11.h>
+
+// include the Direct3D Library file
+#pragma comment (lib, "d3d11.lib")
+
+//Global 
+IDXGISwapChain* swapChain;
+ID3D11Device* dev;
+ID3D11DeviceContext* devcon;
+ID3D11RenderTargetView* backBuffer;
+
+//Init & Cleanup
+void InitD3D(HWND hWnd);
+void CleanD3D(void);
+
+//Utility
+void RenderFrame(void);
 
 const int WINDOW_WIDTH = 500;
 const int WINDOW_HEIGHT = 400;
@@ -17,6 +34,7 @@ const int WINDOW_X = 300;
 /// </summary>
 const int WINDOW_Y = 300;
 
+//Windows 
 int WINAPI WinMain(HINSTANCE hInstance,
     HINSTANCE hPrevInstance,
     LPSTR lpCmdLine,
@@ -28,6 +46,85 @@ LRESULT CALLBACK WindowProc(HWND hWnd,
     LPARAM lParam);
 
 
+
+/// <summary>
+/// Initializes Direct3D
+/// </summary>
+/// <param name="hWnd"></param>
+void InitD3D(HWND hWnd)
+{
+    //Struct to hold info
+    DXGI_SWAP_CHAIN_DESC scd;
+
+    //Clear out struct
+    ZeroMemory(&scd, sizeof(DXGI_SWAP_CHAIN_DESC));
+
+    scd.BufferCount = 1;
+    scd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; //32-bit color
+    scd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    scd.OutputWindow = hWnd;
+    scd.SampleDesc.Count = 4;
+    scd.Windowed = TRUE;
+
+    //Create new device
+    D3D11CreateDeviceAndSwapChain(NULL,
+        D3D_DRIVER_TYPE_HARDWARE,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        D3D11_SDK_VERSION,
+        &scd,
+        &swapChain,
+        &dev,
+        NULL,
+        &devcon);
+
+    //Set render target
+    ID3D11Texture2D* pBackBuffer = nullptr;
+    swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&pBackBuffer);
+
+    //Set back buffer then clear memory
+    dev->CreateRenderTargetView(pBackBuffer, NULL, &backBuffer);
+    pBackBuffer->Release();
+
+    //Set render target as back buffer
+    devcon->OMSetRenderTargets(1, &backBuffer, NULL);
+
+    //Set viewport
+    D3D11_VIEWPORT viewport;
+
+    ZeroMemory(&viewport, sizeof(D3D11_VIEWPORT));
+
+    viewport.TopLeftX = 0;
+    viewport.TopLeftY = 0;
+    viewport.Width = WINDOW_WIDTH;
+    viewport.Height = WINDOW_HEIGHT;
+
+    //Activate viewport struct
+    devcon->RSSetViewports(1, &viewport);
+}
+
+void CleanD3D(void)
+{
+    //Clean all devices
+    swapChain->Release();
+    backBuffer->Release();
+    dev->Release();
+    devcon->Release();
+}
+
+const FLOAT CLEAR_COLOR[4] = { 0.0f, 0.2f, 0.4f, 1.0f };
+void RenderFrame(void)
+{
+    //Clear backbuffer
+    devcon->ClearRenderTargetView(backBuffer, CLEAR_COLOR);
+
+    //Render
+
+    //Switch buffers
+    swapChain->Present(0, 0);
+}
 
 int WINAPI WinMain(HINSTANCE hInstance,
     HINSTANCE hPrevInstance,
@@ -55,6 +152,10 @@ int WINAPI WinMain(HINSTANCE hInstance,
     //Register window class
     RegisterClassEx(&wc);
 
+    //Set size and adjust
+    RECT windowRect = { 0, 0, WINDOW_WIDTH, WINDOW_HEIGHT };
+    AdjustWindowRect(&windowRect, WS_OVERLAPPEDWINDOW, FALSE);
+
     //Create and cache window
     hWnd = CreateWindowEx(NULL,
         L"WindowClass1", //Class name
@@ -62,8 +163,8 @@ int WINAPI WinMain(HINSTANCE hInstance,
         WS_OVERLAPPEDWINDOW,
         WINDOW_X,
         WINDOW_Y,
-        WINDOW_WIDTH,
-        WINDOW_HEIGHT,
+        windowRect.right - windowRect.left, //Width
+        windowRect.bottom - windowRect.top, //Height
         NULL, //Parent window
         NULL,
         hInstance,
@@ -73,16 +174,33 @@ int WINAPI WinMain(HINSTANCE hInstance,
     ShowWindow(hWnd, nShowCmd);
 
     //Struct holds window event messages
-    MSG msg;
+    MSG msg = { 0 };
 
-    while (GetMessage(&msg, NULL, 0, 0))
+    //Init DirectX
+    InitD3D(hWnd);
+
+    //Infinite loop
+    while (true)
     {
-        //Translate keystroke messages
-        TranslateMessage(&msg);
+        //Check for messages in queue
+        if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+        {
+            //Translate keystroke messages
+            TranslateMessage(&msg);
 
-        //Send message to WindowProc function
-        DispatchMessage(&msg);
+            //Send message to WindowProc function
+            DispatchMessage(&msg);
+            
+            //Quit message
+            if (msg.message == WM_QUIT)
+                break;
+        }
+        //Game Code
+        RenderFrame();
     }
+
+    //Cleanup DirectX
+    CleanD3D();
 
     //Return quit message
     return msg.wParam;
@@ -109,7 +227,9 @@ LRESULT CALLBACK WindowProc(HWND hWnd,
 
 int main()
 {
+    HINSTANCE hInstance = HINSTANCE();
 
+    WinMain(hInstance, hInstance, NULL, SW_SHOWNORMAL);
 
     //MessageBox(NULL, L"Hello World!", L"Hello World Window", MB_ICONEXCLAMATION | MB_OK);
 
