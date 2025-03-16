@@ -28,7 +28,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Shaders.shader">
+    <None Include="shaders.hlsl">
       <Filter>Source Files</Filter>
     </None>
   </ItemGroup>

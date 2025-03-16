@@ -98,7 +98,7 @@ void Game::InitPipeline()
 {
     //Load and compile vertex and fragment shader
     ID3DBlob* pVS, * pPS, *pErrorBlob;
-    HRESULT hr = D3DCompileFromFile(L"Shaders.shader", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "vs_main", "vs_5_0", D3DCOMPILE_ENABLE_STRICTNESS, 0, &pVS, &pErrorBlob);
+    HRESULT hr = D3DCompileFromFile(L"shaders.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "VertexMain", "vs_5_0", D3DCOMPILE_ENABLE_STRICTNESS, 0, &pVS, &pErrorBlob);
     
     //If failed, output error
     if (FAILED(hr))
@@ -109,7 +109,7 @@ void Game::InitPipeline()
         }
     }
 
-    hr = D3DCompileFromFile(L"Shaders.shader", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "PShader", "ps_5_0", D3DCOMPILE_ENABLE_STRICTNESS, 0, &pPS, &pErrorBlob);
+    hr = D3DCompileFromFile(L"shaders.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "PixelMain", "ps_5_0", D3DCOMPILE_ENABLE_STRICTNESS, 0, &pPS, &pErrorBlob);
 
     //If failed, output error
     if (FAILED(hr))
@@ -134,7 +134,7 @@ void Game::InitPipeline()
     //D3D11_APPEND_ALIGNED_ELEMENT (figures out byte spacing)
     D3D11_INPUT_ELEMENT_DESC ied[2] = {
         {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
-        {"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},
+        {"COLOR", 0, DXGI_FORMAT_R16G16B16A16_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},
     };
 
     //Create input layout
@@ -153,7 +153,7 @@ void Game::InitGraphics()
     bd.BindFlags = D3D11_BIND_VERTEX_BUFFER; //set buffer as vertex buffer
     bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE; //allow CPU to write to buffer
 
-    mpDev->CreateBuffer(&bd, NULL, &mpVBuffer); //Create buffer
+   
 
     //Verticies
     VERTEX triangleVerticies[3] = {
@@ -162,10 +162,13 @@ void Game::InitGraphics()
         {-0.45f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f},
     };
 
+    mpDev->CreateBuffer(&bd, NULL, &mpVBuffer); //Create buffer
+
     //Copy verts into buffer
     D3D11_MAPPED_SUBRESOURCE ms;
     mpDevcon->Map(mpVBuffer, NULL, D3D11_MAP_WRITE_DISCARD, NULL, &ms); //Map buffer
-    memcpy(ms.pData, triangleVerticies, sizeof(triangleVerticies)); //Copy data
+    //memcpy(ms.pData, triangleVerticies, sizeof(triangleVerticies)); //Copy data
+    ms.pData = &triangleVerticies;
     mpDevcon->Unmap(mpVBuffer, NULL); //Unmap buffer 
 }
 
@@ -283,7 +286,7 @@ int WINAPI Game::WinMain(HINSTANCE mHInstance,
     CleanD3D();
 
     //Return quit message
-    return msg.wParam;
+    return (int)msg.wParam;
 }
 
 //Message handler

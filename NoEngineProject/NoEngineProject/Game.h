@@ -43,16 +43,16 @@ public:
 private:
 	//Global 
 	HINSTANCE mHInstance;
-	IDXGISwapChain* mpSwapChain;
-	ID3D11Device* mpDev;
-	ID3D11DeviceContext* mpDevcon;
-	ID3D11RenderTargetView* mpBackBuffer;
+	IDXGISwapChain* mpSwapChain = nullptr;
+	ID3D11Device* mpDev = nullptr;
+	ID3D11DeviceContext* mpDevcon = nullptr;
+	ID3D11RenderTargetView* mpBackBuffer = nullptr;
 
 	//Shader Global
-	ID3D11VertexShader* mpVS;
-	ID3D11PixelShader* mpPS;
-	ID3D11Buffer* mpVBuffer;
-	ID3D11InputLayout* mpLayout;
+	ID3D11VertexShader* mpVS = nullptr;
+	ID3D11PixelShader* mpPS = nullptr;
+	ID3D11Buffer* mpVBuffer = nullptr;
+	ID3D11InputLayout* mpLayout = nullptr;
 
 	//Size
 	//const int WINDOW_WIDTH = 500;
