@@ -35,6 +35,23 @@ void Game::InitD3D(HWND hWnd)
     scd.Windowed = TRUE; //Windowed or full screen
     scd.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH; //Allows alt+enter to fullscreen
 
+    //Create debug layer
+    UINT creationFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
+
+#if defined(_DEBUG)
+    creationFlags |= D3D11_CREATE_DEVICE_DEBUG;
+#endif
+
+    D3D_FEATURE_LEVEL featureLevels[] =
+    {
+        D3D_FEATURE_LEVEL_11_1,
+        D3D_FEATURE_LEVEL_11_0,
+        D3D_FEATURE_LEVEL_10_1,
+        D3D_FEATURE_LEVEL_10_0,
+        D3D_FEATURE_LEVEL_9_3,
+        D3D_FEATURE_LEVEL_9_1,
+    };
+
     //Create new device
     D3D11CreateDeviceAndSwapChain(NULL,
         D3D_DRIVER_TYPE_HARDWARE,
@@ -51,7 +68,10 @@ void Game::InitD3D(HWND hWnd)
 
     //Set render target
     ID3D11Texture2D* pBackBuffer = nullptr;
-    mpSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&pBackBuffer);
+    HRESULT hr = mpSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&pBackBuffer);
+
+    //Check result
+    assert(SUCCEEDED(hr));
 
     //Set back buffer then clear memory
     mpDev->CreateRenderTargetView(pBackBuffer, NULL, &mpBackBuffer);
@@ -153,8 +173,6 @@ void Game::InitGraphics()
     bd.BindFlags = D3D11_BIND_VERTEX_BUFFER; //set buffer as vertex buffer
     bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE; //allow CPU to write to buffer
 
-   
-
     //Verticies
     VERTEX triangleVerticies[3] = {
         {0.0f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f },
@@ -162,7 +180,11 @@ void Game::InitGraphics()
         {-0.45f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f},
     };
 
-    mpDev->CreateBuffer(&bd, NULL, &mpVBuffer); //Create buffer
+    //Create vertex buffer
+    HRESULT hr = mpDev->CreateBuffer(&bd, NULL, &mpVBuffer); //Create buffer
+
+    //Check result
+    assert(SUCCEEDED(hr));
 
     //Copy verts into buffer
     D3D11_MAPPED_SUBRESOURCE ms;
