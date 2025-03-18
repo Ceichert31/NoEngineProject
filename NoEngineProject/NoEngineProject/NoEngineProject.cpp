@@ -1,12 +1,12 @@
 // NoEngineProject.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
 
-#include "Game.h"
+#include "WindowsPipeline.h"
 
 int main()
 {
-    Game* pGame = new Game();
-    pGame->InitGame();
+    WindowsPipeline* pGame = new WindowsPipeline();
+    pGame->InitWindows();
 
     delete pGame;
     pGame = nullptr;

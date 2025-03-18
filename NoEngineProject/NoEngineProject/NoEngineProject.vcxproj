@@ -127,11 +127,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Game.cpp" />
+    <ClCompile Include="GraphicsPipeline.cpp" />
     <ClCompile Include="NoEngineProject.cpp" />
+    <ClCompile Include="WindowsPipeline.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Game.h" />
+    <ClInclude Include="GraphicsPipeline.h" />
+    <ClInclude Include="WindowsPipeline.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders.hlsl">

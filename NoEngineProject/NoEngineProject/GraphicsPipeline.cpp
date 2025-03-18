@@ -1,22 +1,21 @@
-#include "Game.h"
+#include "GraphicsPipeline.h"
+#include "WindowsPipeline.h"
 
-void Game::InitGame()
+GraphicsPipeline::GraphicsPipeline()
 {
-    mHInstance = HINSTANCE();
-
-    WinMain(mHInstance, mHInstance, NULL, SW_SHOWNORMAL);
+    
 }
 
-void Game::CleanupGame()
+GraphicsPipeline::~GraphicsPipeline()
 {
-    mHInstance = nullptr;
+    CleanD3D();
 }
 
 /// <summary>
 /// Initializes Direct3D
 /// </summary>
 /// <param name="hWnd"></param>
-void Game::InitD3D(HWND hWnd)
+void GraphicsPipeline::InitD3D(HWND hWnd)
 {
     //Struct to hold info
     DXGI_SWAP_CHAIN_DESC scd;
@@ -53,7 +52,7 @@ void Game::InitD3D(HWND hWnd)
     };
 
     //Create new device
-    D3D11CreateDeviceAndSwapChain(NULL,
+    HRESULT hr = D3D11CreateDeviceAndSwapChain(NULL,
         D3D_DRIVER_TYPE_HARDWARE,
         NULL,
         NULL,
@@ -66,9 +65,12 @@ void Game::InitD3D(HWND hWnd)
         NULL,
         &mpDevcon);
 
+    //Check result
+    assert(SUCCEEDED(hr));
+
     //Set render target
     ID3D11Texture2D* pBackBuffer = nullptr;
-    HRESULT hr = mpSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&pBackBuffer);
+    hr = mpSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&pBackBuffer);
 
     //Check result
     assert(SUCCEEDED(hr));
@@ -97,7 +99,7 @@ void Game::InitD3D(HWND hWnd)
     InitGraphics();
 }
 
-void Game::CleanD3D(void)
+void GraphicsPipeline::CleanD3D(void)
 {
     mpSwapChain->SetFullscreenState(FALSE, NULL); //Set windowed
 
@@ -114,12 +116,12 @@ void Game::CleanD3D(void)
     mpDevcon->Release();
 }
 
-void Game::InitPipeline()
+void GraphicsPipeline::InitPipeline()
 {
     //Load and compile vertex and fragment shader
-    ID3DBlob* pVertexBuffer, * pPixelBuffer, *pErrorBlob;
+    ID3DBlob* pVertexBuffer, * pPixelBuffer, * pErrorBlob;
     HRESULT hr = D3DCompileFromFile(L"shaders.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "VertexMain", "vs_5_0", D3DCOMPILE_ENABLE_STRICTNESS, 0, &pVertexBuffer, &pErrorBlob);
-    
+
     //If failed, output error
     if (FAILED(hr))
     {
@@ -169,7 +171,7 @@ void Game::InitPipeline()
     mpDevcon->IASetInputLayout(mpLayout);
 }
 
-void Game::InitGraphics()
+void GraphicsPipeline::InitGraphics()
 {
     //Create vertex buffer
     D3D11_BUFFER_DESC bd;
@@ -201,7 +203,7 @@ void Game::InitGraphics()
 }
 
 FLOAT CLEAR_COLOR[4] = { 0.0f, 0.2f, 0.4f, 1.0f };
-void Game::RenderFrame(FLOAT clearColor[4])
+void GraphicsPipeline::RenderFrame(FLOAT clearColor[4])
 {
     //Clear backbuffer
     mpDevcon->ClearRenderTargetView(mpBackBuffer, CLEAR_COLOR);
@@ -226,112 +228,7 @@ void Game::RenderFrame(FLOAT clearColor[4])
     mpSwapChain->Present(0, 0);
 }
 
-void Game::Update()
+void GraphicsPipeline::Update()
 {
     RenderFrame(CLEAR_COLOR);
-}
-
-//Prototype here for now
-LRESULT CALLBACK WindowProc(HWND hWnd,
-    UINT message,
-    WPARAM wParam,
-    LPARAM lParam);
-
-int WINAPI Game::WinMain(HINSTANCE mHInstance,
-    HINSTANCE hPrevInstance,
-    LPSTR lpCmdLine,
-    int nShowCmd)
-{
-    //Window handle
-    HWND hWnd;
-
-    //Holds window class info
-    WNDCLASSEX wc;
-
-    //Clear memeory for window class
-    ZeroMemory(&wc, sizeof(WNDCLASSEX));
-
-    //Init struct with info
-    wc.cbSize = sizeof(WNDCLASSEX);
-    wc.style = CS_HREDRAW | CS_VREDRAW;
-    wc.lpfnWndProc = WindowProc;
-    wc.hInstance = mHInstance;
-    wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-    //wc.hbrBackground = (HBRUSH)COLOR_WINDOW;
-    wc.lpszClassName = L"WindowClass1";
-
-    //Register window class
-    RegisterClassEx(&wc);
-
-    //Set size and adjust
-    RECT windowRect = { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
-    AdjustWindowRect(&windowRect, WS_OVERLAPPEDWINDOW, FALSE);
-
-    //Create and cache window 
-    hWnd = CreateWindowEx(NULL,
-        L"WindowClass1", //Class name
-        L"Title 1", //Title
-        WS_OVERLAPPEDWINDOW,
-        mWINDOW_X,
-        mWINDOW_Y,
-        windowRect.right - windowRect.left, //Width
-        windowRect.bottom - windowRect.top, //Height
-        NULL, //Parent window
-        NULL,
-        mHInstance,
-        NULL);
-
-    //Display window
-    ShowWindow(hWnd, nShowCmd);
-
-    //Struct holds window event messages
-    MSG msg = { 0 };
-
-    //Init DirectX
-    InitD3D(hWnd);
-
-    //Game loop
-    while (true)
-    {
-        //Check for messages in queue
-        if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
-        {
-            //Translate keystroke messages
-            TranslateMessage(&msg);
-
-            //Send message to WindowProc function
-            DispatchMessage(&msg);
-
-            //Quit message
-            if (msg.message == WM_QUIT)
-                break;
-        }
-        //Game Code
-        Update();
-    }
-
-    //Cleanup DirectX
-    CleanD3D();
-
-    //Return quit message
-    return (int)msg.wParam;
-}
-
-//Message handler
-LRESULT CALLBACK WindowProc(HWND hWnd,
-    UINT message,
-    WPARAM wParam,
-    LPARAM lParam)
-{
-    //Find what code to run for message given
-    switch (message)
-    {
-    case WM_DESTROY:
-        //Close app
-        PostQuitMessage(0);
-        return 0;
-        break;
-    }
-    //Handle additional messages switch didn't handle
-    return DefWindowProc(hWnd, message, wParam, lParam);
 }
