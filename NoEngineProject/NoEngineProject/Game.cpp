@@ -87,7 +87,7 @@ void Game::InitD3D(HWND hWnd)
 
     viewport.TopLeftX = 0;
     viewport.TopLeftY = 0;
-    viewport.Width = SCREEN_HEIGHT;
+    viewport.Width = SCREEN_WIDTH;
     viewport.Height = SCREEN_HEIGHT;
 
     //Activate viewport struct
@@ -117,8 +117,8 @@ void Game::CleanD3D(void)
 void Game::InitPipeline()
 {
     //Load and compile vertex and fragment shader
-    ID3DBlob* pVS, * pPS, *pErrorBlob;
-    HRESULT hr = D3DCompileFromFile(L"shaders.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "VertexMain", "vs_5_0", D3DCOMPILE_ENABLE_STRICTNESS, 0, &pVS, &pErrorBlob);
+    ID3DBlob* pVertexBuffer, * pPixelBuffer, *pErrorBlob;
+    HRESULT hr = D3DCompileFromFile(L"shaders.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "VertexMain", "vs_5_0", D3DCOMPILE_ENABLE_STRICTNESS, 0, &pVertexBuffer, &pErrorBlob);
     
     //If failed, output error
     if (FAILED(hr))
@@ -129,7 +129,7 @@ void Game::InitPipeline()
         }
     }
 
-    hr = D3DCompileFromFile(L"shaders.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "PixelMain", "ps_5_0", D3DCOMPILE_ENABLE_STRICTNESS, 0, &pPS, &pErrorBlob);
+    hr = D3DCompileFromFile(L"shaders.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "PixelMain", "ps_5_0", D3DCOMPILE_ENABLE_STRICTNESS, 0, &pPixelBuffer, &pErrorBlob);
 
     //If failed, output error
     if (FAILED(hr))
@@ -142,8 +142,8 @@ void Game::InitPipeline()
 
 
     //Create shader objects
-    mpDev->CreateVertexShader(pVS->GetBufferPointer(), pVS->GetBufferSize(), NULL, &mpVS);
-    mpDev->CreatePixelShader(pPS->GetBufferPointer(), pPS->GetBufferSize(), NULL, &mpPS);
+    mpDev->CreateVertexShader(pVertexBuffer->GetBufferPointer(), pVertexBuffer->GetBufferSize(), NULL, &mpVS);
+    mpDev->CreatePixelShader(pPixelBuffer->GetBufferPointer(), pPixelBuffer->GetBufferSize(), NULL, &mpPS);
 
     //Set shader objects
     mpDevcon->VSSetShader(mpVS, 0, 0);
@@ -152,13 +152,20 @@ void Game::InitPipeline()
     //Input layout
     //Each value has 4 bytes
     //D3D11_APPEND_ALIGNED_ELEMENT (figures out byte spacing)
-    D3D11_INPUT_ELEMENT_DESC ied[2] = {
+    D3D11_INPUT_ELEMENT_DESC layout[] = {
         {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
-        {"COLOR", 0, DXGI_FORMAT_R16G16B16A16_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},
+        {"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},
     };
 
+    UINT numElements = ARRAYSIZE(layout);
+
     //Create input layout
-    mpDev->CreateInputLayout(ied, 2, pVS->GetBufferPointer(), pVS->GetBufferSize(), &mpLayout);
+    hr = mpDev->CreateInputLayout(layout, numElements, pVertexBuffer->GetBufferPointer(), pVertexBuffer->GetBufferSize(), &mpLayout);
+
+    //Check result
+    assert(SUCCEEDED(hr));
+
+    //Set input layout
     mpDevcon->IASetInputLayout(mpLayout);
 }
 
@@ -189,8 +196,7 @@ void Game::InitGraphics()
     //Copy verts into buffer
     D3D11_MAPPED_SUBRESOURCE ms;
     mpDevcon->Map(mpVBuffer, NULL, D3D11_MAP_WRITE_DISCARD, NULL, &ms); //Map buffer
-    //memcpy(ms.pData, triangleVerticies, sizeof(triangleVerticies)); //Copy data
-    ms.pData = &triangleVerticies;
+    memcpy(ms.pData, triangleVerticies, sizeof(triangleVerticies)); //Copy data
     mpDevcon->Unmap(mpVBuffer, NULL); //Unmap buffer 
 }
 
@@ -205,7 +211,7 @@ void Game::RenderFrame(FLOAT clearColor[4])
     //Set vertex buffer
     UINT stride = sizeof(VERTEX);
     UINT offset = 0;
-    mpDevcon->IAGetVertexBuffers(0, 1, &mpVBuffer, &stride, &offset);
+    mpDevcon->IASetVertexBuffers(0, 1, &mpVBuffer, &stride, &offset);
 
     //Set primitive type
     mpDevcon->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);

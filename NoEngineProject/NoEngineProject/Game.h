@@ -51,7 +51,7 @@ private:
 	//Shader Global
 	ID3D11VertexShader* mpVS = nullptr;
 	ID3D11PixelShader* mpPS = nullptr;
-	ID3D11Buffer* mpVBuffer = nullptr;
+	ID3D11Buffer* mpVBuffer;
 	ID3D11InputLayout* mpLayout = nullptr;
 
 	//Size
