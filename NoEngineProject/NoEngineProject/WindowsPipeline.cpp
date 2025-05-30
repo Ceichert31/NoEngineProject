@@ -24,6 +24,9 @@ void WindowsPipeline::CleanupWindows()
     mpGraphicsPipeline = nullptr;
 }
 
+double currentFrame;
+double lastFrame;
+
 int WINAPI WindowsPipeline::WinMain(HINSTANCE mHInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
     //Window handle
@@ -68,6 +71,10 @@ int WINAPI WindowsPipeline::WinMain(HINSTANCE mHInstance, HINSTANCE hPrevInstanc
     //Display window
     ShowWindow(hWnd, nShowCmd);
 
+    //Set Window Transparent
+    SetWindowLong(hWnd, GWL_EXSTYLE, WS_EX_LAYERED);
+    SetLayeredWindowAttributes(hWnd, RGB(0, 0, 0), 256, LWA_ALPHA);
+
     //Struct holds window event messages
     MSG msg = { 0 };
 
@@ -77,6 +84,7 @@ int WINAPI WindowsPipeline::WinMain(HINSTANCE mHInstance, HINSTANCE hPrevInstanc
     //Game loop
     while (true)
     {
+
         //Check for messages in queue
         if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
         {
