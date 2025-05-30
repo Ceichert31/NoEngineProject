@@ -72,8 +72,8 @@ int WINAPI WindowsPipeline::WinMain(HINSTANCE mHInstance, HINSTANCE hPrevInstanc
     ShowWindow(hWnd, nShowCmd);
 
     //Set Window Transparent
-    SetWindowLong(hWnd, GWL_EXSTYLE, WS_EX_LAYERED);
-    SetLayeredWindowAttributes(hWnd, RGB(0, 0, 0), 256, LWA_ALPHA);
+    //SetWindowLong(hWnd, GWL_EXSTYLE, WS_EX_LAYERED);
+    //SetLayeredWindowAttributes(hWnd, RGB(0, 0, 0), 256, LWA_ALPHA);
 
     //Struct holds window event messages
     MSG msg = { 0 };
